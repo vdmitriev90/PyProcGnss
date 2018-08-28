@@ -51,6 +51,7 @@ dld.clear_directory(os.path.join( workingDir,"OBS"))
 while t1<t_end:
     t2 = t1+dt_
     try:
+
         any(obj.removeData() for obj in dlds)
         any(obj.download(t1, t2, workingDir) for obj in dlds )
         print('---\nreal precessing part started...')
@@ -58,6 +59,7 @@ while t1<t_end:
         print('real precessing part finished\n---')
 
     except ftplib.all_errors as e:
+       print (e)
        print ('processing skipped for batch from {} to {}'.format(t1,t2))
        any(obj.clearWorkingDir(workingDir) for obj in dlds)
 

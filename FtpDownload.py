@@ -75,13 +75,14 @@ class DownloadBase(object):
     def clearWorkingDir(self, workingDir):
         """remove unused data """
         clear_directory(os.path.join(workingDir,self.subdir))
+        self._toRemove.clear()
 
 class DownloadObs(DownloadBase):
 
     def clearWorkingDir(self, workingDir):
         """remove all changes """
         clear_directory(os.path.join(workingDir,'OBS'))
-
+        self._toRemove.clear()
 
 class DownloadTps(DownloadObs):
     """download Tps"""
