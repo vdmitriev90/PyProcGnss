@@ -1,25 +1,26 @@
-import FtpDownload as dld
 import datetime as dt
 import argparse
 import configparser
 import os
 import ftplib
 import subprocess
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
 
+import auxiliary as aux
+import FtpDownload as dld
+
+# example of command line argumants 
+# --file D:\_temp\pProc\ppScript.ini --rd 1
 agrParser = argparse.ArgumentParser()
 agrParser.add_argument('--file', help='path to file with processing configuration', required=True)
 agrParser.add_argument('--rd', help='(remove data) remove all downloaded data after processing finish ', required=False)
 args = agrParser.parse_args()
 
 cgfPath = args.file
-rd = str2bool(args.rd)
+rd = False
+try:
+    rd = aux.str2bool(args.rd)
+except: 
+    rd = False
 
 cfgParser = configparser.ConfigParser()
 cfgParser.read(cgfPath)
@@ -29,7 +30,7 @@ cfgFile = cfgParser['DEFAULT']['ConfigPath']
 workingDir = os.path.dirname(cfgFile)
 
 sites = cfgParser['DEFAULT']['Sites'].split('#')[0].split(' ')
-sites = list(filter(lambda x:  len(x)==4,sites))
+sites = list(filter(lambda x: len(x)==4,sites))
 
 t_start =  dt.datetime.strptime( cfgParser['DEFAULT']['t1'],'%Y-%m-%d')
 t_end =  dt.datetime.strptime( cfgParser['DEFAULT']['t2'],'%Y-%m-%d')
@@ -51,7 +52,7 @@ dld.clear_directory(os.path.join( workingDir,"OBS"))
 while t1<t_end:
     t2 = t1+dt_
     try:
-
+        print(t1)
         any(obj.removeData() for obj in dlds)
         any(obj.download(t1, t2, workingDir) for obj in dlds )
         print('---\nreal precessing part started...')

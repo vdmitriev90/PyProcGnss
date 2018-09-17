@@ -6,7 +6,7 @@
     <ProjectGuid>ce6c5e7f-33a0-47b2-8db2-75d171583b27</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>ppScript.py</StartupFile>
+    <StartupFile>snrScript.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -14,8 +14,9 @@
     <Name>pyProcGnss</Name>
     <RootNamespace>pTest</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--file D:\_temp\pProc\ppScript.ini --rd 1</CommandLineArguments>
+    <CommandLineArguments>--file D:\projects\Work\ptp\SnrAnalizer\SnrAnalizer.ini</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <DebugStdLib>False</DebugStdLib>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -26,6 +27,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="auxiliary.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="check.py" />
     <Compile Include="FtpDownload.py">
       <SubType>Code</SubType>
@@ -34,6 +38,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="procScript.py" />
+    <Compile Include="snrScript.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

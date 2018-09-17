@@ -114,7 +114,7 @@ class DownloadTps(DownloadObs):
                 print( savepath)
                 
                 ftp.retrbinary("RETR " + f ,open(savepath, 'wb').write)
-                if os.path.splitext()[1] != '.tps':
+                if os.path.splitext(savepath)[1] != '.tps':
                     self._toRemove.append( unzip( saveDir, f))
             t += dt.timedelta(days=1)
 
