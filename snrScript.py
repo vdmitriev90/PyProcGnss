@@ -10,7 +10,14 @@ import FtpDownload as dld
 
 agrParser = argparse.ArgumentParser()
 agrParser.add_argument('--file', help='path to file with processing configuration', required=True)
+agrParser.add_argument('--rd', help='(remove data) remove all downloaded data after processing finish ', required=False)
 args = agrParser.parse_args()
+
+rd = False
+try:
+    rd = aux.str2bool(args.rd)
+except: 
+    rd = False
 
 cgfPath = args.file
 workingDir = os.path.dirname(cgfPath)
@@ -32,6 +39,9 @@ with open(cgfPath) as fp:
 dlds = []
 for it in sites:
    dlds.append(dld.DownloadTps(it))
+
+#clear observation direcory
+dld.clear_directory(os.path.join( workingDir,"OBS"))
 
 t1=t_start
 while t1<t_end:
