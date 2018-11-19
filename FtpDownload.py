@@ -6,6 +6,7 @@ import subprocess
 import re
 import shutil
 
+#extension filter for compact rinex (crx) files 
 recrx = re.compile(r'(\.[\d]{2})d')
 
 def clear_directory(folder):
@@ -58,14 +59,14 @@ class DownloadBase(object):
         """download data from FTP"""
     
     def changeTimeLimits(self, t1, t2):
-        """Change time limits. Do nothing by default"""
+        """Change time limits. Do nothing by default""" 
         return t1, t2
 
     def download(self, t1, t2, workingDir):
         """download data from FTP"""
         self._toRemove = []
         newLims = self.changeTimeLimits( t1, t2)
-        self._download(newLims[0],newLims[1], workingDir)
+        self._download(newLims[0], newLims[1], workingDir)
 
     def removeData(self):
         """remove unused data """
@@ -78,6 +79,16 @@ class DownloadBase(object):
         self._toRemove.clear()
 
 class DownloadObs(DownloadBase):
+
+    @staticmethod
+    def unzip_uncrx(dir,file):
+          unZippedPath = unzip(dir,file)
+          command = 'crx2rnx.exe' + ' -f ' + padd(unZippedPath,'\"')
+          subprocess.check_call(command)
+
+          #remove crx file
+          os.remove(unZippedPath)
+          return re.sub(recrx,r'\1o', unZippedPath)
 
     def clearWorkingDir(self, workingDir):
         """remove all changes """
@@ -92,6 +103,7 @@ class DownloadTps(DownloadObs):
 
         ftp = ftplib.FTP("mos-nets") 
         ftp.login("data", "ftpdata")      
+
         saveDir = os.path.join( workingDir,"OBS",self.subdir)
 
         if not os.path.exists(saveDir):
@@ -122,21 +134,10 @@ class DownloadTps(DownloadObs):
 
         ftp.quit()
 
-class DownloadRinex15Sec(DownloadObs):
-
-
-    @staticmethod
-    def unzip_uncrx(dir,file):
-          unZippedPath = unzip(dir,file)
-          command = 'crx2rnx.exe' + ' -f ' + padd(unZippedPath,'\"')
-          subprocess.check_call(command)
-
-          #remove crx file
-          os.remove(unZippedPath)
-          return re.sub(recrx,r'\1o', unZippedPath)
+class DownloadRnx15sTps(DownloadObs):
 
     def _download(self, t1, t2, workingDir):
-        """download Rinex Obs from FTP"""
+        """Download  15 sec Rinex obs. files from TPS FTP site"""
 
         ftp = ftplib.FTP("mos-nets") 
         ftp.login("data", "ftpdata") 
@@ -163,151 +164,55 @@ class DownloadRinex15Sec(DownloadObs):
                     savepath  = os.path.join( saveDir, f)
                     print( savepath)
                     ftp.retrbinary("RETR " + f ,open(savepath, 'wb').write)
-                    self._toRemove.append(DownloadRinex15Sec.unzip_uncrx(saveDir,f))
+                    self._toRemove.append(DownloadObs.unzip_uncrx(saveDir,f))
 
             t += dt.timedelta(days=1)
 
         ftp.quit()
 
-
-class DownloadOrbits(DownloadBase):
-     """download CODE  products from CDDIS FTP"""
-     
-     
-     def __init__(self, subdir,agency, ext):
-        """Constructor"""
-        DownloadBase.__init__(self, subdir)
-        self.agency = agency
-        self.ext = ext
-        self.gap = dt.timedelta(days=1)
-
-
-     def changeTimeLimits(self, t1, t2):
-        """Change time limits. Do nothing by default"""
-        _t1 = t1- self.gap
-        _t2 = t2+ self.gap
-        return _t1, _t2     
-
+class DownloadRnx30sCddis(DownloadObs):
      def _download(self, t1, t2, workingDir):
-        """download CODE products from CDDIS FTP"""
+        """Download  15 sec Rinex obs. files from TPS FTP site"""
 
         ftp = ftplib.FTP("cddis.gsfc.nasa.gov") 
         ftp.login('', '')
 
-        saveDir = os.path.join( workingDir,self.subdir)
+        saveDir = os.path.join( workingDir,"OBS",self.subdir)
         if not os.path.exists(saveDir):
             os.makedirs(saveDir)
-        l = t2-t1-self.gap*2
         t=t1
         while t<t2:
-
-            week =  utcToGPSWeek(t)
-            t += dt.timedelta(days=1)
-            ftpdir = '/pub/gps/products/{:04}'.format(week[0])
-            if ftpdir!= ftp.pwd():
-                print( ftp.cwd(ftpdir))
-
-            curfile = '{}{:04}{}.{}.Z'.format(self.agency, week[0], week[1], self.ext)
-           
-            savepath  = os.path.join(saveDir, curfile)
-            resFile = os.path.splitext(savepath)[0]
-            if os.path.exists(resFile):
-               if t- t1 <=l: 
-                  self._toRemove.append(resFile)
-               continue
-
-            print( savepath)
-            try:
-                ftp.retrbinary("RETR " + curfile, open(savepath, 'wb').write)
-                resFile = unzip(saveDir,curfile)
-                if t- t1 <=l: 
-                    self._toRemove.append(resFile)
-            except BaseException as e:
-                print( 'An exception has occured:'+  str(e))
-
-class DownloadCodeEph(DownloadOrbits):
-     """download CODE SP3 products from CDDIS FTP"""
-     def __init__(self):
-        """Constructor"""
-        DownloadOrbits.__init__(self, 'EPH', 'cod', 'eph')
-class DownloadCodeClk(DownloadOrbits):
-     """download CODE 30 sec. clock products from CDDIS FTP"""
-     def __init__(self):
-        """Constructor"""
-        DownloadOrbits.__init__(self, 'CLK_30S','cod', 'clk')
-
-class DownloadGfzEph(DownloadOrbits):
-     """download GFZ SP3 products from CDDIS FTP"""
-     def __init__(self):
-        """Constructor"""
-        DownloadOrbits.__init__(self, 'EPH','gfz', 'sp3')
-
-class DownloadGfzClk(DownloadOrbits):
-     """download GFZ SP3 products from CDDIS FTP"""
-     def __init__(self):
-        """Constructor"""
-        DownloadOrbits.__init__(self, 'CLK_30S','gfz', 'clk')
-
-class DownloadBCE(DownloadBase):
-      """download broadcast ephemeris from CDDIS FTP"""          
-      def __init__(self,SsLitera):
-          """Constructor"""
-          DownloadBase.__init__(self, 'NAV')
-          self.SsLitera = SsLitera 
-
-      def _download(self, t1, t2, workingDir):
-          """download broadcast ephemeris from CDDIS FTP"""
-          ftp = ftplib.FTP("cddis.gsfc.nasa.gov") 
-          ftp.login('', '') 
-
-          saveDir = os.path.join( workingDir,self.subdir)
-          if not os.path.exists(saveDir):
-              os.makedirs(saveDir)
-          t=t1
-          while t<t2:
+             # string path = string.Format("ftp://{0}RINEX/{1}/{2}/{3}/{4}/", Host, dti.Year, m2, date, Site.ID);
+             #gnss/data/daily/" + ct.Year + "/" + ddd + "/" + ext + "/";
             doy = t.timetuple().tm_yday
-            y = t.year   
-            y2 = '{:02}'.format(y%100)
+            directory = '/gnss/data/daily/{}/{:03}/{}d/'.format(t.year,doy,str(t.year)[2:])
+            print( directory)
 
-            ftpdir = '/pub/gps/data/daily/{}/{:03}/{}{}'.format(t.year,doy,y2,self.SsLitera)
-            t = t + dt.timedelta(days=1)
-            if ftpdir!= ftp.pwd():
-               print( ftp.cwd(ftpdir))
-            #cod"{w}{d}".eph.Z
-            #cod19633.eph.Z
-
-            curfile = 'brdc{:03}0.{}{}.Z'.format(doy, y2, self.SsLitera)
-           
-            savepath  = os.path.join(saveDir, curfile)
-            if os.path.exists(os.path.splitext(savepath)[0]):
-               continue
-
-            print( savepath)
             try:
-                ftp.retrbinary("RETR " + curfile, open(savepath, 'wb').write)
-                resfile  = unzip(saveDir,curfile)
-                self._toRemove.append(resfile)
-            except BaseException as e:
-                print( 'An exception has occured:'+  str(e))
+                ftp.cwd(directory)
+            except ftplib.all_errors as e:
+                print( str(e))
+                raise
+            files = ftp.nlst()
 
-class DownloadBceGLONASS(DownloadBCE):
-     """download GPS broadcast ephemeris from CDDIS FTP"""
-     def __init__(self):
-        """Constructor"""
-        DownloadBCE.__init__(self, 'g')
+            for f in files:
+                if (f[:4].lower()==self.subdir.lower()):
+                    savepath  = os.path.join( saveDir, f)
+                    print( savepath)
+                    ftp.retrbinary("RETR " + f ,open(savepath, 'wb').write)
+                    self._toRemove.append(DownloadObs.unzip_uncrx(saveDir,f))
 
-class DownloadBceGPS(DownloadBCE):
-     """download GLONASS broadcast ephemeris from CDDIS FTP"""
-     def __init__(self):
-        """Constructor"""
-        DownloadBCE.__init__(self, 'n')
+            t += dt.timedelta(days=1)
+
+        ftp.quit()
 
 if __name__ == "__main__":
    #d =  DownloaderRinex15Sec("DRBN")
-   d =  DownloadBceGPS()
+   d =  DownloadRnx30sCddis('ARTU')
    iday = 200
    t2 = dt.datetime.now() - dt.timedelta(days=iday)
    print( t2)
    t1 = t2 - dt.timedelta(days=10)
    print( t1)
    d.download(t1,t2,"D:\_temp\python")
+

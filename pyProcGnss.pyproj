@@ -14,7 +14,7 @@
     <Name>pyProcGnss</Name>
     <RootNamespace>pTest</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--file D:\projects\Work\ptp\SnrAnalizer\SnrAnalizer.ini</CommandLineArguments>
+    <CommandLineArguments>--file D:\_temp\snrTest\SnrAnalizer.ini</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <DebugStdLib>False</DebugStdLib>
   </PropertyGroup>
@@ -30,8 +30,17 @@
     <Compile Include="auxiliary.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="check.py" />
+    <Compile Include="checkSite.py" />
     <Compile Include="FtpDownload.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="FtpDownloadBce.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="FtpDownloadSp3.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GeoNetwork.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ppScript.py">

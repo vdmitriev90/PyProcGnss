@@ -4,10 +4,14 @@ import configparser
 import os
 import ftplib
 import subprocess
+import GeoNetwork
 
 import auxiliary as aux
-import FtpDownload as dld
+import FtpDownload as dldBase
+import FtpDownloadSp3 as dldSp3
+import FtpDownloadBce as dldBce
 
+tstart = dt.datetime.now()
 agrParser = argparse.ArgumentParser()
 agrParser.add_argument('--file', help='path to file with processing configuration', required=True)
 agrParser.add_argument('--rd', help='(remove data) remove all downloaded data after processing finish ', required=False)
@@ -34,14 +38,22 @@ with open(cgfPath) as fp:
     t_start =  dt.datetime.strptime( cfgParser['DEFAULT']['t1'],'%Y-%m-%d')
     t_end =  dt.datetime.strptime( cfgParser['DEFAULT']['t2'],'%Y-%m-%d')
     dt_ = dt.timedelta(days= int(cfgParser['DEFAULT']['dt']))
+    strNet = cfgParser['DEFAULT']['Network']
+    geoNet = GeoNetwork.GeoNetwork[strNet]
 
 #dld.DownloadCodeClk(),dld.DownloadGfzClk()
 dlds = []
-for it in sites:
-   dlds.append(dld.DownloadTps(it))
+if(geoNet==GeoNetwork.GeoNetwork.TPS):
+    for it in sites:
+        dlds.append(dldBase.DownloadTps(it))
+elif(geoNet==GeoNetwork.GeoNetwork.IGS):
+    dlds.append(dldSp3.DownloadGfzEph(daysgap=0))
+    for it in sites:
+        dlds.append(dldBase.DownloadRnx30sCddis(it))
+
 
 #clear observation direcory
-dld.clear_directory(os.path.join( workingDir,"OBS"))
+dldBase.clear_directory(os.path.join( workingDir,"OBS"))
 
 t1=t_start
 while t1<t_end:
@@ -51,7 +63,7 @@ while t1<t_end:
         any(obj.removeData() for obj in dlds)
         any(obj.download(t1, t2, workingDir) for obj in dlds )
         print('---\nreal precessing part started...')
-        subprocess.check_call(appFile+' '+cgfPath)
+        #subprocess.check_call(appFile+' '+cgfPath)
         print('real precessing part finished\n---')
 
     except ftplib.all_errors as e:
@@ -63,3 +75,5 @@ while t1<t_end:
 if(rd):
     any(obj.removeData() for obj in dlds)
     any(obj.clearWorkingDir(workingDir) for obj in dlds)
+tfinish = dt.datetime.now()
+print('Elapsed time: ' +str(tfinish-tstart))

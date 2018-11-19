@@ -6,7 +6,7 @@ import argparse
 import time
 
 def check():
-    #tstart = time.localtime(time.time())
+    tstart = dt.datetime.now()
     parser = argparse.ArgumentParser()
     parser.add_argument('--site', help='site to be processed', required=True)
     #parser.add_argument("-v",'--vvv', help='test argument', required=True)
@@ -49,6 +49,8 @@ def check():
     plt.plot(args,values,'ro')
     plt.show()
     conn.close()
+    tfinish = dt.datetime.now()
+    print('Elapsed time: ' +str(tfinish-tstart))
 
 if __name__ == "__main__":
     check()

@@ -37,10 +37,10 @@ t_end =  dt.datetime.strptime( cfgParser['DEFAULT']['t2'],'%Y-%m-%d')
 dt_ = dt.timedelta(days= int(cfgParser['DEFAULT']['dt']))
 
 #dld.DownloadCodeClk(),dld.DownloadGfzClk()
-dlds = [dld.DownloadGfzEph(),dld.DownloadBceGLONASS(),dld.DownloadBceGPS(),dld.DownloadRinex15Sec(sites[0])]
+dlds = [dld.DownloadGfzEph(),dld.DownloadBceGLONASS(),dld.DownloadBceGPS(),dld.DownloadRnx15sTps(sites[0])]
 
 if len(sites) >1:
-    dlds.append(dld.DownloadRinex15Sec(sites[1]))
+    dlds.append(dld.DownloadRnx15sTps(sites[1]))
 #else:
  #   dlds.append()
 
